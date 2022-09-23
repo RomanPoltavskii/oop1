@@ -10,20 +10,18 @@ public class Collectionss {
     }
 
 //readOnlyCollection
-    public static <T> Collection<T> unmodifiableCollection(Collection<? extends T> c) {
-        if (c.getClass() == UnmodifiableCollection.class) {
-            return (Collection<T>) c;
-        }
+    public static <T> Collecti<T> unmodifiableCollection(Collecti<? extends T> c) {
+
         return new UnmodifiableCollection<>(c);
     }
 
-    static class UnmodifiableCollection<E> implements Collection<E>, Serializable {
-        @java.io.Serial
+    static class UnmodifiableCollection<E> implements Collecti<E>, Serializable {
+
         private static final long serialVersionUID = 1820017752578914078L;
 
-        final Collection<? extends E> c;
+        final Collecti<? extends E> c;
 
-        UnmodifiableCollection(Collection<? extends E> c) {
+        UnmodifiableCollection(Collecti<? extends E> c) {
             if (c == null)
                 throw new NullPointerException();
             this.c = c;
@@ -49,10 +47,6 @@ public class Collectionss {
             return c.toArray(a);
         }
 
-        public <T> T[] toArray(IntFunction<T[]> f) {
-            return c.toArray(f);
-        }
-
         public String toString() {
             return c.toString();
         }
@@ -73,10 +67,6 @@ public class Collectionss {
                     throw new UnsupportedOperationException();
                 }
 
-                @Override
-                public void forEachRemaining(Consumer<? super E> action) {
-                    i.forEachRemaining(action);
-                }
             };
         }
 
@@ -108,6 +98,137 @@ public class Collectionss {
             throw new UnsupportedOperationException();
         }
     }
+
+    public static <T> MyList<T> unmodifiableList(MyList<? extends T> list) {
+        return (list instanceof RandomAccess ?
+                new Collectionss.UnmodifiableRandomAccessList<>(list) :
+                new Collectionss.UnmodifiableList<>(list));
+    }
+
+    static class UnmodifiableRandomAccessList<E> extends Collectionss.UnmodifiableList<E>
+            implements RandomAccess
+    {
+        UnmodifiableRandomAccessList(MyList<? extends E> list) {
+            super(list);
+        }
+
+        public MyList<E> subList(int fromIndex, int toIndex) {
+            return new Collectionss.UnmodifiableRandomAccessList<>(
+                    list.subList(fromIndex, toIndex));
+        }
+
+        private static final long serialVersionUID = -2542308836966382001L;
+
+        private Object writeReplace() {
+            return new Collectionss.UnmodifiableList<>(list);
+        }
+    }
+
+    static class UnmodifiableList<E> extends Collectionss.UnmodifiableCollection<E>
+            implements MyList<E> {
+        private static final long serialVersionUID = -283967356065247728L;
+
+        final MyList<? extends E> list;
+
+        UnmodifiableList(MyList<? extends E> list) {
+            super(list);
+            this.list = list;
+        }
+
+        public boolean equals(Object o) {
+            return o == this || list.equals(o);
+        }
+        public int hashCode()           {
+            return list.hashCode();
+        }
+
+        public E get(int index) {
+            return list.get(index);
+        }
+        public E set(int index, E element) {
+
+            throw new UnsupportedOperationException();
+        }
+        public void add(int index, E element) {
+            throw new UnsupportedOperationException();
+        }
+        public E remove(int index) {
+            throw new UnsupportedOperationException();
+        }
+        public int indexOf(Object o)            {
+            return list.indexOf(o);
+        }
+        public int lastIndexOf(Object o)        {
+            return list.lastIndexOf(o);
+        }
+        public boolean addAll(int index, Collection<? extends E> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void replaceAll(UnaryOperator<E> operator) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void sort(Comparator<? super E> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public ListIterator<E> listIterator()   {
+            return listIterator(0);
+        }
+
+        public ListIterator<E> listIterator(final int index) {
+            return new ListIterator<E>() {
+                private final ListIterator<? extends E> i
+                        = list.listIterator(index);
+
+                public boolean hasNext()     {
+                    return i.hasNext();
+                }
+                public E next()              {
+                    return i.next();
+                }
+                public boolean hasPrevious() {
+                    return i.hasPrevious();
+                }
+                public E previous()          {
+                    return i.previous();
+                }
+                public int nextIndex()       {
+                    return i.nextIndex();
+                }
+                public int previousIndex()   {
+                    return i.previousIndex();
+                }
+
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+                public void set(E e) {
+                    throw new UnsupportedOperationException();
+                }
+                public void add(E e) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void forEachRemaining(Consumer<? super E> action) {
+                    i.forEachRemaining(action);
+                }
+            };
+        }
+
+        public MyList<E> subList(int fromIndex, int toIndex) {
+            return new Collectionss.UnmodifiableList<>(list.subList(fromIndex, toIndex));
+        }
+
+        private Object readResolve() {
+            return (list instanceof RandomAccess
+                    ? new Collectionss.UnmodifiableRandomAccessList<>(list)
+                    : this);
+        }
+    }
+
     //singletonCollection
     public static <T> Set<T> singleton(T o) {
         return new SingletonSet<>(o);
@@ -184,7 +305,7 @@ public class Collectionss {
             extends AbstractSet<E>
             implements Serializable
     {
-        @java.io.Serial
+
         private static final long serialVersionUID = 3193687207550431679L;
         private final E element;
 
@@ -225,7 +346,6 @@ public class Collectionss {
             extends AbstractList<E>
             implements RandomAccess, Serializable {
 
-        @java.io.Serial
         private static final long serialVersionUID = 3093736618740652951L;
 
         private final E element;
@@ -275,29 +395,14 @@ public class Collectionss {
         }
     }
 
-    /**
-     * Returns an immutable map, mapping only the specified key to the
-     * specified value.  The returned map is serializable.
-     *
-     * @param <K> the class of the map keys
-     * @param <V> the class of the map values
-     * @param key the sole key to be stored in the returned map.
-     * @param value the value to which the returned map maps {@code key}.
-     * @return an immutable map containing only the specified key-value
-     *         mapping.
-     * @since 1.3
-     */
+
     public static <K,V> Map<K,V> singletonMap(K key, V value) {
         return new SingletonMap<>(key, value);
     }
 
-    /**
-     * @serial include
-     */
     private static class SingletonMap<K,V>
             extends AbstractMap<K,V>
             implements Serializable {
-        @java.io.Serial
         private static final long serialVersionUID = -6979724477215052911L;
 
 
@@ -480,7 +585,6 @@ public class Collectionss {
             extends AbstractSet<E>
             implements Serializable
     {
-        @java.io.Serial
         private static final long serialVersionUID = 1582296315990362920L;
 
         public Iterator<E> iterator() {
@@ -528,8 +632,6 @@ public class Collectionss {
             return Spliterators.emptySpliterator();
         }
 
-        // Preserves singleton property
-        @java.io.Serial
         private Object readResolve() {
             return EMPTY_SET;
         }
@@ -554,7 +656,6 @@ public class Collectionss {
     private static class EmptyList<E>
             extends AbstractList<E>
             implements RandomAccess, Serializable {
-        @java.io.Serial
         private static final long serialVersionUID = 8842843931221139166L;
 
         public Iterator<E> iterator() {
@@ -602,7 +703,6 @@ public class Collectionss {
         public void sort(Comparator<? super E> c) {
         }
 
-        // Override default methods in Collection
         @Override
         public void forEach(Consumer<? super E> action) {
             Objects.requireNonNull(action);
@@ -611,8 +711,7 @@ public class Collectionss {
         @Override
         public Spliterator<E> spliterator() { return Spliterators.emptySpliterator(); }
 
-        // Preserves singleton property
-        @java.io.Serial
+
         private Object readResolve() {
             return EMPTY_LIST;
         }
@@ -631,7 +730,7 @@ public class Collectionss {
             extends AbstractMap<K,V>
             implements Serializable
     {
-        @java.io.Serial
+
         private static final long serialVersionUID = 6428348081105594320L;
 
         public int size()                          {return 0;}
@@ -710,8 +809,6 @@ public class Collectionss {
             throw new UnsupportedOperationException();
         }
 
-        // Preserves singleton property
-        @java.io.Serial
         private Object readResolve() {
             return EMPTY_MAP;
         }
