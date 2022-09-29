@@ -10,18 +10,18 @@ public class Collectionss {
     }
 
 //readOnlyCollection
-    public static <T> Collecti<T> unmodifiableCollection(Collecti<? extends T> c) {
+    public static <T> Collection<T> readOnlyCollection(Collection<? extends T> c) {
 
-        return new UnmodifiableCollection<>(c);
+        return new ReadOnlyCollection<>(c);
     }
 
-    static class UnmodifiableCollection<E> implements Collecti<E>, Serializable {
+    static class ReadOnlyCollection<E> implements Collection<E>, Serializable {
 
         private static final long serialVersionUID = 1820017752578914078L;
 
-        final Collecti<? extends E> c;
+        final Collection<? extends E> c;
 
-        UnmodifiableCollection(Collecti<? extends E> c) {
+        ReadOnlyCollection(Collection<? extends E> c) {
             if (c == null)
                 throw new NullPointerException();
             this.c = c;
@@ -99,38 +99,17 @@ public class Collectionss {
         }
     }
 
-    public static <T> MyList<T> unmodifiableList(MyList<? extends T> list) {
-        return (list instanceof RandomAccess ?
-                new Collectionss.UnmodifiableRandomAccessList<>(list) :
-                new Collectionss.UnmodifiableList<>(list));
+    public static <T> List<T> readOnlyList(List<? extends T> list) {
+        return new Collectionss.ReadOnlyList<>(list);
     }
 
-    static class UnmodifiableRandomAccessList<E> extends Collectionss.UnmodifiableList<E>
-            implements RandomAccess
-    {
-        UnmodifiableRandomAccessList(MyList<? extends E> list) {
-            super(list);
-        }
-
-        public MyList<E> subList(int fromIndex, int toIndex) {
-            return new Collectionss.UnmodifiableRandomAccessList<>(
-                    list.subList(fromIndex, toIndex));
-        }
-
-        private static final long serialVersionUID = -2542308836966382001L;
-
-        private Object writeReplace() {
-            return new Collectionss.UnmodifiableList<>(list);
-        }
-    }
-
-    static class UnmodifiableList<E> extends Collectionss.UnmodifiableCollection<E>
-            implements MyList<E> {
+    static class ReadOnlyList<E> extends Collectionss.ReadOnlyCollection<E>
+            implements List<E> {
         private static final long serialVersionUID = -283967356065247728L;
 
-        final MyList<? extends E> list;
+        final List<? extends E> list;
 
-        UnmodifiableList(MyList<? extends E> list) {
+        ReadOnlyList(List<? extends E> list) {
             super(list);
             this.list = list;
         }
@@ -218,21 +197,17 @@ public class Collectionss {
             };
         }
 
-        public MyList<E> subList(int fromIndex, int toIndex) {
-            return new Collectionss.UnmodifiableList<>(list.subList(fromIndex, toIndex));
+        public List<E> subList(int fromIndex, int toIndex) {
+            return new Collectionss.ReadOnlyList<>(list.subList(fromIndex, toIndex));
         }
 
         private Object readResolve() {
-            return (list instanceof RandomAccess
-                    ? new Collectionss.UnmodifiableRandomAccessList<>(list)
-                    : this);
+            return this;
         }
     }
 
     //singletonCollection
-    public static <T> Set<T> singleton(T o) {
-        return new SingletonSet<>(o);
-    }
+
 
     static <E> Iterator<E> singletonIterator(final E e) {
         return new Iterator<E>() {
@@ -299,52 +274,11 @@ public class Collectionss {
             }
         };
     }
-
-
-    private static class SingletonSet<E>
-            extends AbstractSet<E>
-            implements Serializable
-    {
-
-        private static final long serialVersionUID = 3193687207550431679L;
-        private final E element;
-
-        SingletonSet(E e) {element = e;}
-
-        public Iterator<E> iterator() {
-            return singletonIterator(element);
-        }
-
-        public int size() {return 1;}
-
-        public boolean contains(Object o) {return eq(o, element);}
-
-        // Override default methods for Collection
-        @Override
-        public void forEach(Consumer<? super E> action) {
-            action.accept(element);
-        }
-        @Override
-        public Spliterator<E> spliterator() {
-            return singletonSpliterator(element);
-        }
-        @Override
-        public boolean removeIf(Predicate<? super E> filter) {
-            throw new UnsupportedOperationException();
-        }
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(element);
-        }
-    }
-
     public static <T> List<T> singletonList(T o) {
         return new SingletonList<>(o);
     }
 
-    private static class SingletonList<E>
-            extends AbstractList<E>
-            implements RandomAccess, Serializable {
+    private static class SingletonList<E> extends AbstractList<E> implements RandomAccess, Serializable {
 
         private static final long serialVersionUID = 3093736618740652951L;
 
@@ -395,133 +329,12 @@ public class Collectionss {
         }
     }
 
-
-    public static <K,V> Map<K,V> singletonMap(K key, V value) {
-        return new SingletonMap<>(key, value);
-    }
-
-    private static class SingletonMap<K,V>
-            extends AbstractMap<K,V>
-            implements Serializable {
-        private static final long serialVersionUID = -6979724477215052911L;
-
-
-        private final K k;
-        private final V v;
-
-        SingletonMap(K key, V value) {
-            k = key;
-            v = value;
-        }
-
-        public int size(){
-            return 1;
-        }
-        public boolean isEmpty(){
-            return false;
-        }
-        public boolean containsKey(Object key) {
-            return eq(key, k);
-        }
-        public boolean containsValue(Object value){
-            return eq(value, v);
-        }
-        public V get(Object key){
-            return (eq(key, k) ? v : null);
-        }
-
-        private transient Set<K> keySet;
-        private transient Set<Map.Entry<K,V>> entrySet;
-        private transient Collection<V> values;
-
-        public Set<K> keySet() {
-            if (keySet==null)
-                keySet = singleton(k);
-            return keySet;
-        }
-
-        public Set<Map.Entry<K,V>> entrySet() {
-            if (entrySet==null)
-                entrySet = java.util.Collections.<Map.Entry<K,V>>singleton(
-                        new SimpleImmutableEntry<>(k, v));
-            return entrySet;
-        }
-
-        public Collection<V> values() {
-            if (values==null)
-                values = singleton(v);
-            return values;
-        }
-
-        // Override default methods in Map
-        @Override
-        public V getOrDefault(Object key, V defaultValue) {
-            return eq(key, k) ? v : defaultValue;
-        }
-
-        @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
-            action.accept(k, v);
-        }
-
-        @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V putIfAbsent(K key, V value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean remove(Object key, Object value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean replace(K key, V oldValue, V newValue) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V replace(K key, V value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V computeIfAbsent(K key,
-                                 Function<? super K, ? extends V> mappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V computeIfPresent(K key,
-                                  BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V compute(K key,
-                         BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V merge(K key, V value,
-                       BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(k) ^ Objects.hashCode(v);
-        }
-    }
     static boolean eq(Object o1, Object o2) {
         return o1==null ? o2==null : o1.equals(o2);
     }
+
     //emptyCollections
+
     public static <T> Iterator<T> emptyIterator() {
         return (Iterator<T>) EmptyIterator.EMPTY_ITERATOR;
     }
@@ -539,7 +352,6 @@ public class Collectionss {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> ListIterator<T> emptyListIterator() {
         return (ListIterator<T>) EmptyListIterator.EMPTY_ITERATOR;
     }
@@ -559,7 +371,6 @@ public class Collectionss {
         public void add(E e) { throw new UnsupportedOperationException(); }
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> Enumeration<T> emptyEnumeration() {
         return (Enumeration<T>) EmptyEnumeration.EMPTY_ENUMERATION;
     }
@@ -573,86 +384,11 @@ public class Collectionss {
         public Iterator<E> asIterator() { return emptyIterator(); }
     }
 
-    @SuppressWarnings("rawtypes")
-    public static final Set EMPTY_SET = new EmptySet<>();
-
-    @SuppressWarnings("unchecked")
-    public static<T> Set<T> emptySet() {
-        return (Set<T>) EMPTY_SET;
-    }
-
-    private static class EmptySet<E>
-            extends AbstractSet<E>
-            implements Serializable
-    {
-        private static final long serialVersionUID = 1582296315990362920L;
-
-        public Iterator<E> iterator() {
-            return emptyIterator();
-        }
-
-        public int size() {
-            return 0;
-        }
-        public boolean isEmpty() {
-            return true;
-        }
-        public void clear() {
-
-        }
-
-        public boolean contains(Object obj) {
-            return false;}
-        public boolean containsAll(Collection<?> c) {
-            return c.isEmpty();
-        }
-
-        public Object[] toArray() {
-            return new Object[0];
-        }
-
-        public <T> T[] toArray(T[] a) {
-            if (a.length > 0)
-                a[0] = null;
-            return a;
-        }
-
-        // Override default methods in Collection
-        @Override
-        public void forEach(Consumer<? super E> action) {
-            Objects.requireNonNull(action);
-        }
-        @Override
-        public boolean removeIf(Predicate<? super E> filter) {
-            Objects.requireNonNull(filter);
-            return false;
-        }
-        @Override
-        public Spliterator<E> spliterator() {
-            return Spliterators.emptySpliterator();
-        }
-
-        private Object readResolve() {
-            return EMPTY_SET;
-        }
-
-        @Override
-        public int hashCode() {
-            return 0;
-        }
-    }
-
-    @SuppressWarnings("rawtypes")
     public static final List EMPTY_LIST = new EmptyList<>();
-
-    @SuppressWarnings("unchecked")
     public static <T> List<T> emptyList() {
         return (List<T>) EMPTY_LIST;
     }
 
-    /**
-     * @serial include
-     */
     private static class EmptyList<E>
             extends AbstractList<E>
             implements RandomAccess, Serializable {
@@ -714,103 +450,6 @@ public class Collectionss {
 
         private Object readResolve() {
             return EMPTY_LIST;
-        }
-    }
-
-    @SuppressWarnings("rawtypes")
-    public static final Map EMPTY_MAP = new EmptyMap<>();
-
-
-    @SuppressWarnings("unchecked")
-    public static <K,V> Map<K,V> emptyMap() {
-        return (Map<K,V>) EMPTY_MAP;
-    }
-
-    private static class EmptyMap<K,V>
-            extends AbstractMap<K,V>
-            implements Serializable
-    {
-
-        private static final long serialVersionUID = 6428348081105594320L;
-
-        public int size()                          {return 0;}
-        public boolean isEmpty()                   {return true;}
-        public void clear()                        {}
-        public boolean containsKey(Object key)     {return false;}
-        public boolean containsValue(Object value) {return false;}
-        public V get(Object key)                   {return null;}
-        public Set<K> keySet()                     {return emptySet();}
-        public Collection<V> values()              {return emptySet();}
-        public Set<Map.Entry<K,V>> entrySet()      {return emptySet();}
-
-        public boolean equals(Object o) {
-            return (o instanceof Map) && ((Map<?,?>)o).isEmpty();
-        }
-
-        public int hashCode()                      {return 0;}
-
-        // Override default methods in Map
-        @Override
-        public V getOrDefault(Object k, V defaultValue) {
-            return defaultValue;
-        }
-
-        @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
-            Objects.requireNonNull(action);
-        }
-
-        @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-            Objects.requireNonNull(function);
-        }
-
-        @Override
-        public V putIfAbsent(K key, V value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean remove(Object key, Object value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean replace(K key, V oldValue, V newValue) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V replace(K key, V value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V computeIfAbsent(K key,
-                                 Function<? super K, ? extends V> mappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V computeIfPresent(K key,
-                                  BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V compute(K key,
-                         BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public V merge(K key, V value,
-                       BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-            throw new UnsupportedOperationException();
-        }
-
-        private Object readResolve() {
-            return EMPTY_MAP;
         }
     }
 }

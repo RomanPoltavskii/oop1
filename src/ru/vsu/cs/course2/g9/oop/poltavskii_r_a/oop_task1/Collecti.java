@@ -8,5 +8,5 @@ public interface Collecti<E> extends Iterable<E> {
     boolean contains(Object o);
     Object[] toArray();
     <T> T[] toArray(T[] a);
-    boolean containsAll(Collection<?> c);
+    boolean containsAll(Collecti<?> c);
 }
